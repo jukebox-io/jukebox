@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jukebox"
-version = "0.1.0"
+version = "0.3.0"
 description = ""
 authors = ["Arpan Mahanty <arpan.mahanty.007@gmail.com>"]
 license = "MIT"
@@ -8,11 +8,17 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+python-decouple = "^3.8"
 
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
 pre-commit = "^3.3.3"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
 
 [build-system]
 requires = ["poetry-core"]
