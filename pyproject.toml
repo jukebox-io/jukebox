@@ -8,8 +8,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-python-decouple = "^3.8"
-
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
