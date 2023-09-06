@@ -1,3 +1,4 @@
-from uvicorn import Config
+from jukebox.logging import configure_logging
 
-Config
+# we configure the logging level and format
+configure_logging()
