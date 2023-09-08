@@ -8,7 +8,7 @@ import typing
 import uvicorn
 import watchfiles
 
-from jukebox.logging import configure_logging
+from jukebox.logger import configure_logging
 from jukebox.config import ROOT_DIR
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ def start_server() -> None:
 
         # initialize workers
         for _ in range(options.workers):
-            start_worker(server.run, options, [socket])
+            start_worker(server.run, [socket], server_config=options)
 
         # wait for file changes
         try:
@@ -67,6 +67,10 @@ def start_server() -> None:
             break
 
     # conclude
+    while active_workers:
+        worker = active_workers.pop()
+        worker.join()
+
     time.sleep(1)
     logger.info("Server stopped !!!")
 
@@ -74,38 +78,23 @@ def start_server() -> None:
 # Starts a new worker process and returns its instance
 
 
-def start_worker(target: typing.Callable, options: uvicorn.Config, *args, **kwargs) -> ctx.Process:
+def start_worker(
+    target: typing.Callable, *pargs, server_config: uvicorn.Config = None, **pkwargs
+) -> ctx.Process:
     try:
-        in_stream = sys.stdin.fileno()
+        stdin_fno = sys.stdin.fileno()
     except OSError:
-        in_stream = None
-
-    def _child(
-        target: typing.Callable,
-        options: uvicorn.Config,
-        addt_args: list,
-        addt_kwargs: dict,
-        in_stream: int = None,
-    ) -> None:
-        if in_stream is not None:
-            sys.stdin = os.fdopen(in_stream)
-
-        # configure logging
-        configure_logging()
-        options.configure_logging()  # uvicorn logging
-
-        # execute
-        target(*addt_args, **addt_kwargs)
+        stdin_fno = None
 
     # build process
     p = ctx.Process(
-        target=_child,
+        target=exec_target,
         kwargs={
             "target": target,
-            "options": options,
-            "addt_args": args,
-            "addt_kwargs": kwargs,
-            "in_stream": in_stream,
+            "pargs": pargs,
+            "pkwargs": pkwargs,
+            "stdin_fno": stdin_fno,
+            "server_config": server_config,
         },
     )
 
@@ -114,6 +103,28 @@ def start_worker(target: typing.Callable, options: uvicorn.Config, *args, **kwar
     active_workers.append(p)
 
     return p
+
+
+def exec_target(
+    target: typing.Callable[..., None] = None,
+    pargs: list = [],
+    pkwargs: dict = {},
+    stdin_fno: int = None,
+    server_config: uvicorn.Config = None,
+) -> None:
+    # re-open input stream
+    if stdin_fno is not None:
+        sys.stdin = os.fdopen(stdin_fno)
+
+    # re-configure logging
+    configure_logging()
+
+    if server_config:
+        server_config.configure_logging()  # uvicorn logging
+
+    # execute target
+    if target:
+        target(*pargs, **pkwargs)
 
 
 """
@@ -135,3 +146,8 @@ def stringify_changes(changes: set[FileChange]) -> str:
         affected_paths.append(str(path))
 
     return ", ".join(affected_paths)
+
+
+if __name__ == "__main__":
+    configure_logging()
+    start_server()
