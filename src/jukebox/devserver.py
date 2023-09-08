@@ -59,7 +59,7 @@ def start_server() -> None:
         # wait for file changes
         try:
             change_list: set[FileChange] = next(file_watcher)
-            logger.debug(
+            logger.info(
                 "Watchfiles detected changes in %s. Reloading ...", stringify_changes(change_list)
             )
 
