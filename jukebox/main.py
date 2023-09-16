@@ -1,10 +1,5 @@
 from fastapi import FastAPI
 
-from jukebox.logger import setup_loggers
-
-# we configure the logging level and format
-setup_loggers()
-
 app = FastAPI()
 
 

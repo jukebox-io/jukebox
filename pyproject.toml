@@ -11,32 +11,62 @@ python = "^3.11"
 
 fastapi = "^0.103.1"
 uvicorn = "^0.23.2"
-click = "^8.1.7"
+loguru = "^0.7.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
 pre-commit = "^3.3.3"
 watchfiles = "^0.20.0"
+ruff = "^0.0.290"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
-line-length = 100
+line-length = 120
 target-version = ['py311']
 include = '\.pyi?$'
 
-[tool.poe]
-verbosity = -1
-
-[tool.poe.tasks]
-
-    [tool.poe.tasks.configure]
-    help = "Setup environment"
-    cmd = "poetry update"
-
-
-    [tool.poe.tasks.run]
-    help = ""
-    script = "jukebox.devserver:entrypoint"
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+fix = true
+select = [
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+    # flake8-comprehensions
+    "C4",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # mccabe
+    "C90",
+    # pycodestyle
+    "E", "W",
+    # pyflakes
+    "F",
+    # pygrep-hooks
+    "PGH",
+    # pyupgrade
+    "UP",
+    # ruff
+    "RUF",
+    # tryceratops
+    "TRY",
+]
+ignore = [
+    # LineTooLong
+    "E501",
+    # DoNotAssignLambda
+    "E731",
+]

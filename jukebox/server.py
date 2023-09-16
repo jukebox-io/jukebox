@@ -1,17 +1,16 @@
-import logging
+import contextlib
 import multiprocessing
 import os
 import pathlib
 import sys
 import time
 import typing
+
 import uvicorn
 import watchfiles
 
-from jukebox.logger import setup_loggers
 from jukebox.globals import ROOT_DIR
-
-logger = logging.getLogger(__name__)
+from jukebox.logging import Logger
 
 RUN_CONFIG: dict[str, typing.Any] = {
     "app": "jukebox.main:app",
@@ -31,13 +30,15 @@ active_workers: list[ctx.Process] = []
 
 # Starts the dev server and wait for file changes
 def serve_develop() -> None:
-    # configure logging
-    setup_loggers()
+    # initialize logging
+    Logger.init_logger()
 
-    logger.info(
-        "Starting development server at http://%s:%d/", RUN_CONFIG["host"], RUN_CONFIG["port"]
+    Logger.info(
+        "Starting development server at http://%s:%d/",
+        RUN_CONFIG["host"],
+        RUN_CONFIG["port"],
     )
-    logger.info("Quit the server with CONTROL-C.")
+    Logger.info("Quit the server with CONTROL-C.")
 
     options = uvicorn.Config(**RUN_CONFIG)
     socket = options.bind_socket()
@@ -60,8 +61,9 @@ def serve_develop() -> None:
         # wait for file changes
         try:
             change_list: set[FileChange] = next(file_watcher)
-            logger.info(
-                "Watchfiles detected changes in %s. Reloading ...", stringify_changes(change_list)
+            Logger.info(
+                "Watchfiles detected changes in %s. Reloading ...",
+                stringify_changes(change_list),
             )
 
         except (StopIteration, KeyboardInterrupt):
@@ -73,12 +75,15 @@ def serve_develop() -> None:
         worker.join()
 
     time.sleep(1)
-    logger.info("Server stopped !!!")
+    Logger.info("Server stopped !!!")
 
 
 # Starts a new worker process and returns its instance
 def start_worker(
-    target: typing.Callable, *pargs, server_config: uvicorn.Config = None, **pkwargs
+    target: typing.Callable,
+    *pargs,
+    server_config: uvicorn.Config | None = None,
+    **pkwargs,
 ) -> ctx.Process:
     try:
         stdin_fno = sys.stdin.fileno()
@@ -105,18 +110,22 @@ def start_worker(
 
 
 def exec_target(
-    target: typing.Callable[..., None] = None,
-    pargs: list = [],
-    pkwargs: dict = {},
-    stdin_fno: int = None,
+    target: typing.Callable[..., None] | None = None,
+    pargs: list | None = None,
+    pkwargs: dict | None = None,
+    stdin_fno: int | None = None,
     server_config: uvicorn.Config = None,
 ) -> None:
     # re-open input stream
+    if pkwargs is None:
+        pkwargs = {}
+    if pargs is None:
+        pargs = []
     if stdin_fno is not None:
         sys.stdin = os.fdopen(stdin_fno)
 
-    # re-configure logging
-    setup_loggers()
+    # re-initialize logging
+    Logger.init_logger()
 
     if server_config:
         server_config.configure_logging()  # uvicorn logging
@@ -138,10 +147,8 @@ def stringify_changes(changes: set[FileChange]) -> str:
 
     for c in changes:
         path = pathlib.Path(c[1])
-        try:
+        with contextlib.suppress(ValueError):
             path = path.relative_to(ROOT_DIR)
-        except ValueError:
-            ...
         affected_paths.append(str(path))
 
     return ", ".join(affected_paths)
