@@ -8,8 +8,8 @@ import typing
 import uvicorn
 import watchfiles
 
-from jukebox.logger import configure_logging
-from jukebox.config import ROOT_DIR
+from jukebox.logger import setup_loggers
+from jukebox.globals import ROOT_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +30,10 @@ active_workers: list[ctx.Process] = []
 
 
 # Starts the dev server and wait for file changes
+def serve_develop() -> None:
+    # configure logging
+    setup_loggers()
 
-
-def start_server() -> None:
     logger.info(
         "Starting development server at http://%s:%d/", RUN_CONFIG["host"], RUN_CONFIG["port"]
     )
@@ -76,8 +77,6 @@ def start_server() -> None:
 
 
 # Starts a new worker process and returns its instance
-
-
 def start_worker(
     target: typing.Callable, *pargs, server_config: uvicorn.Config = None, **pkwargs
 ) -> ctx.Process:
@@ -117,7 +116,7 @@ def exec_target(
         sys.stdin = os.fdopen(stdin_fno)
 
     # re-configure logging
-    configure_logging()
+    setup_loggers()
 
     if server_config:
         server_config.configure_logging()  # uvicorn logging
@@ -148,6 +147,5 @@ def stringify_changes(changes: set[FileChange]) -> str:
     return ", ".join(affected_paths)
 
 
-if __name__ == "__main__":
-    configure_logging()
-    start_server()
+def entrypoint() -> None:
+    serve_develop()

@@ -11,17 +11,32 @@ python = "^3.11"
 
 fastapi = "^0.103.1"
 uvicorn = "^0.23.2"
+click = "^8.1.7"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
 pre-commit = "^3.3.3"
 watchfiles = "^0.20.0"
 
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.black]
 line-length = 100
 target-version = ['py311']
 include = '\.pyi?$'
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.poe]
+verbosity = -1
+
+[tool.poe.tasks]
+
+    [tool.poe.tasks.configure]
+    help = "Setup environment"
+    cmd = "poetry update"
+
+
+    [tool.poe.tasks.run]
+    help = ""
+    script = "jukebox.devserver:entrypoint"

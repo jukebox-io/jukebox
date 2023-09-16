@@ -1,13 +1,15 @@
 import logging
 import sys
 
-from jukebox.config import LOG_LEVEL, LOG_FORMAT
+from jukebox.globals import LOG_LEVEL, LOG_FORMAT
+
 
 _is_logging_configured: bool = False
 
 
-def configure_logging() -> None:
+def setup_loggers() -> None:
     """Configures loggers for logging purposes"""
+    global _is_logging_configured
 
     if _is_logging_configured:
         return
@@ -20,3 +22,4 @@ def configure_logging() -> None:
         ],
         force=True,
     )
+    _is_logging_configured = True
