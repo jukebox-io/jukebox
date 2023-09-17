@@ -1,13 +1,10 @@
-import contextlib
 import multiprocessing
 import os
-import pathlib
 import sys
 import time
 import typing
 
 import uvicorn
-import watchfiles
 
 from jukebox.globals import ROOT_DIR
 from jukebox.logging import Logger
@@ -30,6 +27,9 @@ active_workers: list[ctx.Process] = []
 
 # Starts the dev server and wait for file changes
 def serve_develop() -> None:
+    # Import necessary packages
+    import watchfiles
+
     # initialize logging
     Logger.init_logger()
 
@@ -60,12 +60,8 @@ def serve_develop() -> None:
 
         # wait for file changes
         try:
-            change_list: set[FileChange] = next(file_watcher)
-            Logger.info(
-                "Watchfiles detected changes in %s. Reloading ...",
-                stringify_changes(change_list),
-            )
-
+            next(file_watcher)
+            Logger.info("Watchfiles detected changes in %s. Reloading ...", ROOT_DIR)
         except (StopIteration, KeyboardInterrupt):
             break
 
@@ -133,25 +129,6 @@ def exec_target(
     # execute target
     if target:
         target(*pargs, **pkwargs)
-
-
-"""
-A tuple representing a file change, first element is a [`Change`][watchfiles.Change] member, second is the path
-of the file or directory that changed.
-"""
-FileChange = tuple[watchfiles.Change, str]
-
-
-def stringify_changes(changes: set[FileChange]) -> str:
-    affected_paths: list[str] = []
-
-    for c in changes:
-        path = pathlib.Path(c[1])
-        with contextlib.suppress(ValueError):
-            path = path.relative_to(ROOT_DIR)
-        affected_paths.append(str(path))
-
-    return ", ".join(affected_paths)
 
 
 def entrypoint() -> None:
