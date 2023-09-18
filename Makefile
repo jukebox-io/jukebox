@@ -25,21 +25,16 @@ help:
 
 configure:	## Configures the poetry environment and the pre-commit hooks
 	@echo
-	@echo "🛠️ Configuring your environment"
+	@echo "🏗 Configuring your environment"
+	@poetry update --lock
 	@poetry install --sync
+	@poetry run pre-commit autoupdate
 	@poetry run pre-commit install
 	@poetry run pre-commit install --hook-type pre-push
 
-upgrade:	## Upgrades the poetry environment and the pre-commit hooks
-	@echo
-	@echo "🏗 Upgrading your environment"
-	@poetry update --lock
-	@poetry run pre-commit autoupdate
-	@$(MAKE) configure
-
 serve:		## Start a server for development purposes
 	@$(MAKE) logo
-	@$(MAKE) upgrade
+	@$(MAKE) configure
 
 	@echo
 	@echo "🚀 Starting development server"
