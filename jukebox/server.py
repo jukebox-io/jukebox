@@ -1,5 +1,7 @@
+import contextlib
 import multiprocessing
 import os
+import pathlib
 import sys
 import time
 import typing
@@ -34,7 +36,7 @@ def serve_develop() -> None:
     Logger.init_logger()
 
     Logger.info(
-        "Starting development server at http://%s:%d/",
+        "Starting development server at http://{}:{}/",
         RUN_CONFIG["host"],
         RUN_CONFIG["port"],
     )
@@ -60,8 +62,16 @@ def serve_develop() -> None:
 
         # wait for file changes
         try:
-            next(file_watcher)
-            Logger.info("Watchfiles detected changes in %s. Reloading ...", ROOT_DIR)
+            changes: set[tuple[watchfiles.Change, str]] = next(file_watcher)
+
+            change_list = []
+            for change in changes:
+                path = change[1]
+                with contextlib.suppress(ValueError):
+                    path = f"{pathlib.Path(path).relative_to(ROOT_DIR)}"
+                change_list.append(path)
+
+            Logger.info("Watchfiles detected changes in {}. Reloading ...", ", ".join(change_list))
         except (StopIteration, KeyboardInterrupt):
             break
 
@@ -129,7 +139,3 @@ def exec_target(
     # execute target
     if target:
         target(*pargs, **pkwargs)
-
-
-def entrypoint() -> None:
-    serve_develop()
