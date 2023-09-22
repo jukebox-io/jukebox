@@ -24,7 +24,7 @@ async def finalize() -> None:
 
 
 @app.middleware("http")
-async def log_http_request(request: Request, call_next: typing.Callable[..., typing.Coroutine[Response]]) -> Response:
+async def log_http_request(request: Request, call_next: typing.Callable[..., typing.Awaitable[Response]]) -> Response:
     # Log the request and response
     log_request(request)
     response: Response = await call_next(request)
