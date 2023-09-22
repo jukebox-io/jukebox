@@ -15,7 +15,7 @@ RUN_CONFIG: dict[str, typing.Any] = {
     "app": "jukebox.main:app",
     "host": "localhost",
     "port": 8000,
-    "workers": 4,
+    "workers": 5,
     "log_config": None,
 }
 
