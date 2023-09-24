@@ -1,0 +1,11 @@
+databases:
+  - name: jukebox-db
+    databaseName: jukebox_db
+    user: jukebox_admin
+
+services:
+  - type: web
+    name: jukebox-web
+    runtime: python
+    buildCommand: "make configure"
+    startCommand: "make serve"
