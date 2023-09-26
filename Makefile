@@ -7,9 +7,9 @@ PIP = $(VENV)/bin/pip
 MAKEFLAGS += --no-print-directory
 
 .PHONY: all $(MAKECMDGOALS)
-.DEFAULT_GOAL := help
+# .DEFAULT_GOAL := help
 
-intro:
+.logo:
 	@echo
 	@echo "		     _       _        _                		"
 	@echo "		    | |_   _| | _____| |__   _____  __ 		"
@@ -17,26 +17,41 @@ intro:
 	@echo "		| |_| | |_| |   <  __/ |_) | (_) >  <  		"
 	@echo "		 \___/ \__,_|_|\_\___|_.__/ \___/_/\_\ 		"
 
-help: intro
-	@echo
-	@echo "🦊 Usage: make [command] ..."
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+# Development mode
+serve:				.logo .update-deps .start-dev-server
+client:				.logo
 
-configure: intro 		## Configures the poetry environment and the pre-commit hooks
+# Production mode
+install:			.logo .install-deps
+start-web:			.logo
+
+# Client Setup
+build-client:		.logo
+deploy-client:		.logo .start-client
+
+
+# Private targets
+
+.update-deps:
 	@echo
-	@echo "🏗 Configuring your environment"
+	@echo "🏗  Upgrading your environment"
 	@poetry update --lock
 	@poetry install --sync
 	@poetry run pre-commit autoupdate
 	@poetry run pre-commit install
 	@poetry run pre-commit install --hook-type pre-push
 
-serve: configure		## Start a server for development purposes
+.install-deps:
+	@echo
+	@echo "🏗  Setting up your environment"
+	@poetry install --sync
+
+.start-dev-server:
 	@echo
 	@echo "🚀 Starting development server"
 	@${PYTHON} -c "from jukebox.server import serve_develop; serve_develop()"
 
-run: intro				## Run client application for development purposes
+.start-client:
 	@echo
 	@echo "📱 Running client application"
 	@flutter run
