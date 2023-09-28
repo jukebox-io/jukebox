@@ -23,7 +23,7 @@ client:				.logo
 
 # Production mode
 install:			.logo .install-deps
-start-web:			.logo
+start-web:			.logo .start-prod-server
 
 # Client Setup
 build-client:		.logo
@@ -49,7 +49,12 @@ deploy-client:		.logo .start-client
 .start-dev-server:
 	@echo
 	@echo "🚀 Starting development server"
-	@${PYTHON} -c "from jukebox.server import serve_develop; serve_develop()"
+	@${PYTHON} -c "from jukebox.server import dev_server_entrypoint as entrypoint; entrypoint()"
+
+.start-prod-server:
+	@echo
+	@echo "🚀 Starting production server"
+	@${PYTHON} -c "from jukebox.server import prod_server_entrypoint as entrypoint; entrypoint()"
 
 .start-client:
 	@echo

@@ -8,7 +8,7 @@ import typing
 
 import uvicorn
 
-from jukebox.globals import ROOT_DIR
+from jukebox.globals import ROOT_DIR, WSGI_APPLICATION_URL
 from jukebox.logging import Logger
 
 RUN_CONFIG: dict[str, typing.Any] = {
@@ -28,7 +28,7 @@ active_workers: list[ctx.Process] = []
 
 
 # Starts the dev server and wait for file changes
-def serve_develop() -> None:
+def dev_server_entrypoint() -> None:
     # Import necessary packages
     import watchfiles
 
@@ -74,6 +74,65 @@ def serve_develop() -> None:
             Logger.info("Watchfiles detected changes in {}. Reloading ...", ", ".join(change_list))
         except (StopIteration, KeyboardInterrupt):
             break
+
+    # conclude
+    while active_workers:
+        worker = active_workers.pop()
+        worker.join()
+
+    time.sleep(1)
+    Logger.info("Server stopped !!!")
+
+
+# Starts the prod server
+def prod_server_entrypoint() -> None:
+    # initialize logging
+    Logger.init_logger()
+
+    # validate environment
+    try:
+        import gunicorn.app.base
+    except Exception:
+        Logger.critical("Non-unix environment detected ... Cannot proceed further ... 🚫")
+        sys.exit(1)
+
+    # Import necessary packages
+    import contextlib
+
+    from gunicorn import __version__ as gunicorn_version
+    from gunicorn.arbiter import Arbiter
+
+    class StandaloneApplication(gunicorn.app.base.BaseApplication):
+        """
+        Standalone interface for Gunicorn Server.
+
+        Refer to, https://docs.gunicorn.org/en/stable/custom.html
+        """
+
+        def on_ready(self, server: Arbiter) -> None:
+            Logger.info("Starting gunicorn {}", gunicorn_version)
+            Logger.info("Listening at: {}", ", ".join([str(lnr) for lnr in server.LISTENERS]))
+
+        def load_config(self) -> None:
+            # Server socket
+            self.cfg.set("bind", "0.0.0.0:" + os.getenv("PORT", "8000"))
+
+            # Worker processes
+            self.cfg.set("workers", 5)
+            self.cfg.set("worker_class", "uvicorn.workers.UvicornWorker")
+
+            # Logging
+            self.cfg.set("loglevel", "error")
+
+            # Server hooks
+            self.cfg.set("when_ready", self.on_ready)
+
+        def load(self) -> str:
+            return WSGI_APPLICATION_URL
+
+    # Start gunicorn server
+    with contextlib.suppress(KeyboardInterrupt):
+        StandaloneApplication().run()
 
     # conclude
     while active_workers:

@@ -1,7 +1,6 @@
 import os
 import typing
 
-import uvicorn
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import PlainTextResponse
 
@@ -42,7 +41,3 @@ async def server_crash_handler(request: Request, exc: Exception) -> Response:
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content="Internal Server Error",
     )
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_config=None)

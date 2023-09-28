@@ -10,6 +10,7 @@ __all__ = ["Logger"]
 class Logger:
     # logger configs
     log = _internal.log
+    opt = _internal.opt
 
     trace = _internal.trace
     debug = _internal.debug
@@ -29,7 +30,7 @@ class Logger:
     def init_logger() -> None:
         """Configures loggers for logging purposes."""
         if Logger._SETUP_COMPLETED:
-            return
+            return  # no-op
 
         # Remove any existing loggers
         _internal.remove()
