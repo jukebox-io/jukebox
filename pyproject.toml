@@ -17,7 +17,7 @@ gunicorn = "^21.2.0"
 [tool.poetry.group.dev.dependencies]
 watchfiles = "^0.20.0"
 pre-commit = "^3.4.0"
-black = "^23.9.1"
+black = "^24.3.0"
 ruff = "^0.0.291"
 
 [build-system]
